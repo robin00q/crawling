@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Main Page</title>
+    <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        #Container {
+            margin : 0px auto;
+            width : 50%;
+        }
+        #chartKorea {
+            margin : 20px 0px;
+        }
+        #chartKorea > button {
+            margin: 0px 5px;
+            border : 0.5px solid gainsboro;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark">
+    <a class="navbar-brand" href="#">Navbar</a>
+</nav>
+<div id="Container">
+    <div id="chartKorea">
+        <button type="button" class="btn btn-success btn-site" id="melon">Melon Chart</button>
+        <button type="button" class="btn btn-light btn-site" id="genie">Genie Chart</button>
+        <button type="button" class="btn btn-warning btn-site" id="bugs">Bugs Chart</button>
+    </div>
+    <div class="float-left">
+        <ul class="list-group" id="korea-chart-list">
+        </ul>
+    </div>
+    <table class="table">
+        <thead class="thead-dark">
+        <tr>
+            <th scope="col">순위</th>
+            <th scope="col">가수</th>
+            <th scope="col">노래</th>
+        </tr>
+        </thead>
+        <tbody id="korea-chart-table">
+        </tbody>
+    </table>
+</div>
+
+<script src="/node_modules/jquery/dist/jquery.min.js"></script>
+<script src="/node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const chartKorea = document.querySelector('#chartKorea');
+    chartKorea.addEventListener('click', function(e) {
+        const siteUrl = '/chart/' + e.target.id;
+        console.log(siteUrl);
+
+        let xhr = new XMLHttpRequest();
+        xhr.open('GET', siteUrl);
+        xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+        xhr.send();
+        xhr.onload = function() {
+            const response = JSON.parse(xhr.responseText);
+            const koreaChartTable = document.querySelector('#korea-chart-table');
+            koreaChartTable.innerHTML="";
+            response.forEach(song => {
+                const tr = document.createElement("TR");
+                tr.innerHTML =
+                    '<th scope="row">' + song.grade + '</th>' +
+                    '<th>' + song.artist + '</th>' +
+                    '<th>' + song.title + '</th>';
+                koreaChartTable.appendChild(tr);
+            });
+        }
+    }, false);
+</script>
+</body>
+</html>

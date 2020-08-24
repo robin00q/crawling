@@ -39,10 +39,11 @@ class ScrappingServiceTest {
     ResourceLoader resourceLoader;
 
     /**
-     *   파일에서 리소스 읽기
+     * 파일에서 리소스 읽기
      */
     Document getBodyReadByTestResource(String filePath) throws IOException {
         Resource resource = resourceLoader.getResource(filePath);
+
         File file = resource.getFile();
         Document doc = Jsoup.parse(file, "UTF-8");
 
@@ -53,10 +54,11 @@ class ScrappingServiceTest {
     @DisplayName("스크래핑 url을 사용한 종합 테스트")
     @Test
     void scarppingTestUsingURL() throws IOException {
-        List<Song> songList = scrappingService.getSongList(Jsoup.connect(ScrappingConstant.BUGS_SITE_URL).get(), "싹쓰리", "다시 여기 바닷가");
+        List<Song> songList = null;
+        songList = scrappingService.getSongList(Jsoup.connect(ScrappingConstant.GENIE_SITE_URL).get(), "싹쓰리", "다시 여기 바닷가");
 
-        assertNotNull(songList.size(), ()-> "SongList가 Null입니다.");
-        for(Song s : songList) {
+        assertNotNull(songList.size(), () -> "SongList가 Null입니다.");
+        for (Song s : songList) {
             System.out.println(s.getTitle() + " " + s.getArtist());
         }
     }
@@ -66,17 +68,17 @@ class ScrappingServiceTest {
     void scrappingTest() throws IOException {
         List<Song> songList = scrappingService.getSongList(getBodyReadByTestResource(VALID_FILE_PATH), "싹쓰리", "다시 여기 바닷가");
 
-        assertNotNull(songList.size(), ()-> "SongList가 Null입니다.");
-        for(Song s : songList) {
+        assertNotNull(songList.size(), () -> "SongList가 Null입니다.");
+        for (Song s : songList) {
             System.out.println(s.getTitle() + " " + s.getArtist());
         }
     }
 
     @DisplayName("없는 아티스트를 찾는 경우 예외처리")
     @Test
-    void noMatchingArtist() throws IOException {
+    void noMatchingArtist() {
         assertThrows(NoMatchingResultException.class,
-                ()-> scrappingService.getSongList(
+                () -> scrappingService.getSongList(
                         getBodyReadByTestResource(VALID_FILE_PATH),
                         "나는없는아티스트일걸?",
                         "다시 여기 바닷가"));
@@ -86,7 +88,7 @@ class ScrappingServiceTest {
     @Test
     void noMatchingTitle() {
         assertThrows(NoMatchingResultException.class,
-                ()-> scrappingService.getSongList(
+                () -> scrappingService.getSongList(
                         getBodyReadByTestResource(VALID_FILE_PATH),
                         "싹쓰리",
                         "나는없는제목일걸?"));
@@ -99,20 +101,20 @@ class ScrappingServiceTest {
         Element wrappingTag = testFindWrappingTag(doc.body(), "싹쓰리");
         String pathHierarchy = findHierarchy(wrappingTag);
 
-        System.out.println(pathHierarchy.toString());
+        System.out.println(pathHierarchy);
 
-        Elements elements = doc.select(pathHierarchy.toString());
+        Elements elements = doc.select(pathHierarchy);
         List<String> ret = new ArrayList<>();
 
         elements.stream()
                 .reduce(new Element("init"), (e1, e2) -> {
-                    if(e1.parent() != e2.parent()) {
+                    if (e1.parent() != e2.parent()) {
                         ret.add(e2.text());
                     }
                     return e2;
                 });
 
-        for(String s : ret) {
+        for (String s : ret) {
             System.out.println(s);
         }
 
@@ -121,12 +123,12 @@ class ScrappingServiceTest {
 
     private String findHierarchy(Element currentTag) {
         List<String> hierarchy = new ArrayList<>();
-        while(currentTag.parent() != null) {
-            if(hasId(currentTag)) {
+        while (currentTag.parent() != null) {
+            if (hasId(currentTag)) {
                 hierarchy.add('#' + currentTag.id());
-            } else if(hasClassname(currentTag)) {
+            } else if (hasClassname(currentTag)) {
                 String className = Arrays.stream(currentTag.className().split(" "))
-                        .map(s -> '.'+s)
+                        .map(s -> '.' + s)
                         .collect(Collectors.joining());
                 hierarchy.add(className);
             } else {
@@ -139,33 +141,33 @@ class ScrappingServiceTest {
     }
 
     private boolean hasClassname(Element currentTag) {
-        if(currentTag.className() == null || currentTag.className().isEmpty()) {
+        if (currentTag.className() == null || currentTag.className().isEmpty()) {
             return false;
         }
         return true;
     }
 
     private boolean hasId(Element currentTag) {
-        if(currentTag.id() == null || currentTag.id().isEmpty()) {
+        if (currentTag.id() == null || currentTag.id().isEmpty()) {
             return false;
         }
         return true;
     }
 
     /**
-     *   DFS를 이용하여 BODY태그부터 훑어가며 keyword에 처음으로 맞는 키워드 찾음
+     * DFS를 이용하여 BODY태그부터 훑어가며 keyword에 처음으로 맞는 키워드 찾음
      */
     private Element testFindWrappingTag(Element currentTag, String keyword) {
-        if(currentTag.childrenSize() == 0) {
+        if (currentTag.childrenSize() == 0) {
             // TODO 유명한 노래나 가수 어떻게 처리할 것인가?
-            if(currentTag.text().contains(keyword)) {
+            if (currentTag.text().contains(keyword)) {
                 return currentTag;
             }
             return null;
         }
-        for(int i = 0 ; i < currentTag.childrenSize() ; i++){
+        for (int i = 0; i < currentTag.childrenSize(); i++) {
             Element ret = testFindWrappingTag(currentTag.child(i), keyword);
-            if(ret != null){
+            if (ret != null) {
                 return ret;
             }
         }

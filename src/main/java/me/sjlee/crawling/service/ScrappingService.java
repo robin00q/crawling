@@ -1,5 +1,6 @@
 package me.sjlee.crawling.service;
 
+import me.sjlee.crawling.constant.ScrappingConstant;
 import me.sjlee.crawling.domain.Song;
 import me.sjlee.crawling.exception.DifferentSizeArtistAndTitleException;
 import me.sjlee.crawling.exception.NoMatchingResultException;
@@ -33,8 +34,8 @@ public class ScrappingService {
         }
 
         List<Song> songList = new ArrayList<>();
-        for (int i = 0; i < Math.min(artistList.size(), titleList.size()); i++) {
-            songList.add(new Song(artistList.get(i), titleList.get(i)));
+        for (int i = 0; i < Math.min(ScrappingConstant.MAX_SONG_LENGTH, titleList.size()); i++) {
+            songList.add(new Song(i+1, titleList.get(i), artistList.get(i)));
         }
 
         return songList;
@@ -44,7 +45,7 @@ public class ScrappingService {
      *  keyword 기반으로 html페이지를 스크래핑 한 뒤 결과를 가져온다.
      */
     private List<String> scrapUrlBykeyword(Document doc, String keyword) {
-        Element matchingWrappingTag = findWrappingTag(doc.body(), keyword);
+        Element matchingWrappingTag = findWrappingTag(doc, doc.body(), keyword);
         if(matchingWrappingTag == null) {
             throw new NoMatchingResultException();
         }
@@ -57,16 +58,21 @@ public class ScrappingService {
     /**
      *  DFS를 이용하여 BODY태그부터 훑어가며 keyword에 처음으로 맞는 키워드 찾음
      */
-    private Element findWrappingTag(Element currentTag, String keyword) {
+    private Element findWrappingTag(Document doc, Element currentTag, String keyword) {
         if(currentTag.childrenSize() == 0) {
             // TODO 유명한 노래나 가수 어떻게 처리할 것인가?
             if(currentTag.text().contains(keyword)) {
+                String hierarchicalPath = findHierarchicalPath(currentTag);
+                Elements elements = doc.select(hierarchicalPath);
+                if(elements.size() < ScrappingConstant.MAX_SONG_LENGTH) {
+                    return null;
+                }
                 return currentTag;
             }
             return null;
         }
         for(int i = 0 ; i < currentTag.childrenSize() ; i++){
-            Element ret = findWrappingTag(currentTag.child(i), keyword);
+            Element ret = findWrappingTag(doc, currentTag.child(i), keyword);
             if(ret != null){
                 return ret;
             }
