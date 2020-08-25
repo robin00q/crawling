@@ -7,6 +7,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public class Song {
 
+    private int grade;
+
     private String title;
 
     private String artist;
