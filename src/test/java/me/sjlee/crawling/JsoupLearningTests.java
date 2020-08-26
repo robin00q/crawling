@@ -77,6 +77,18 @@ class JsoupLearningTests {
         }
     }
 
+    @DisplayName("Invalid한 문자열을 주는 경우")
+    @Test
+    void invalid_string_given_to_jsoup() throws IOException {
+        assertThrows(IllegalArgumentException.class, () -> Jsoup.connect("invalid").get());
+    }
+
+    @DisplayName("Invalid한 문자열(null)을 주는 경우")
+    @Test
+    void invalid_string_null_given_to_jsoup() throws IOException {
+        assertThrows(IllegalArgumentException.class, () -> Jsoup.connect(null).get());
+    }
+
     private boolean findWrappingTag(Element currentTag) {
         if(currentTag.childrenSize() == 0) {
             // TODO 유명한 노래나 가수 어떻게 처리할 것인가?

@@ -2,24 +2,49 @@ package me.sjlee.crawling.service;
 
 import me.sjlee.crawling.constant.ScrappingConstant;
 import me.sjlee.crawling.domain.Song;
+import me.sjlee.crawling.domain.SongChart;
 import me.sjlee.crawling.exception.DifferentSizeArtistAndTitleException;
+import me.sjlee.crawling.exception.InvalidUrlGivenException;
 import me.sjlee.crawling.exception.NoMatchingResultException;
+import me.sjlee.crawling.repository.SongChartRepository;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class ScrappingService {
 
-    public List<Song> getSongList(Document doc, String artist, String title) {
-        return scrapUrl(doc, artist, title);
+    @Autowired
+    SongChartRepository songChartRepository;
+
+    @Autowired
+    StringRedisTemplate stringRedisTemplate;
+
+    @Cacheable(value = "songChart", key = "#url")
+    public List<Song> getSongList(String url, String artist, String title) throws InvalidUrlGivenException {
+        List<Song> chartedList = new ArrayList<>();
+        try {
+            chartedList = scrapUrl(Jsoup.connect(url).get(), artist, title);
+            SongChart save = songChartRepository.save(new SongChart(url, chartedList));
+        } catch(IOException | IllegalArgumentException e) {
+            throw new InvalidUrlGivenException();
+        }
+        return chartedList;
     }
 
     /**

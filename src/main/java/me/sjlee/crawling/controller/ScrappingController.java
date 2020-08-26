@@ -2,16 +2,15 @@ package me.sjlee.crawling.controller;
 
 import me.sjlee.crawling.constant.ScrappingConstant;
 import me.sjlee.crawling.domain.Song;
+import me.sjlee.crawling.exception.InvalidUrlGivenException;
 import me.sjlee.crawling.service.ScrappingService;
-import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +27,7 @@ public class ScrappingController {
 
     @GetMapping(value = "/chart/{siteName}", produces = {"application/json; charset=UTF-8"})
     @ResponseBody
+    @Transactional
     public List<Song> getChartData(@PathVariable String siteName) {
         String url = "";
         if("melon".equals(siteName)) {
@@ -41,8 +41,8 @@ public class ScrappingController {
         }
         List<Song> songList = new ArrayList<>();
         try {
-            songList = scrappingService.getSongList(Jsoup.connect(url).get(), ScrappingConstant.FAMOUS_ARTIST, ScrappingConstant.FAMOUS_TITLE);
-        } catch (Exception e) {
+            songList = scrappingService.getSongList(url, ScrappingConstant.FAMOUS_ARTIST, ScrappingConstant.FAMOUS_TITLE);
+        } catch (InvalidUrlGivenException e) {
             return songList;
         }
 

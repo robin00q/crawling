@@ -2,7 +2,7 @@ package me.sjlee.crawling.service;
 
 import me.sjlee.crawling.constant.ScrappingConstant;
 import me.sjlee.crawling.domain.Song;
-import me.sjlee.crawling.exception.NoMatchingResultException;
+import me.sjlee.crawling.exception.InvalidUrlGivenException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -29,9 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @SpringBootTest
 class ScrappingServiceTest {
 
-
-    final String VALID_FILE_PATH = "classpath:/melon-test.htm";
-
     @Autowired
     ScrappingService scrappingService;
 
@@ -50,48 +47,16 @@ class ScrappingServiceTest {
         return doc;
     }
 
-    @Disabled
     @DisplayName("스크래핑 url을 사용한 종합 테스트")
     @Test
-    void scarppingTestUsingURL() throws IOException {
+    void scarppingTestUsingURL() throws InvalidUrlGivenException {
         List<Song> songList = null;
-        songList = scrappingService.getSongList(Jsoup.connect(ScrappingConstant.GENIE_SITE_URL).get(), "싹쓰리", "다시 여기 바닷가");
+        songList = scrappingService.getSongList(ScrappingConstant.GENIE_SITE_URL, "싹쓰리", "다시 여기 바닷가");
 
         assertNotNull(songList.size(), () -> "SongList가 Null입니다.");
         for (Song s : songList) {
             System.out.println(s.getTitle() + " " + s.getArtist());
         }
-    }
-
-    @DisplayName("스크래핑 테스트파일을 사용한 종합 테스트")
-    @Test
-    void scrappingTest() throws IOException {
-        List<Song> songList = scrappingService.getSongList(getBodyReadByTestResource(VALID_FILE_PATH), "싹쓰리", "다시 여기 바닷가");
-
-        assertNotNull(songList.size(), () -> "SongList가 Null입니다.");
-        for (Song s : songList) {
-            System.out.println(s.getTitle() + " " + s.getArtist());
-        }
-    }
-
-    @DisplayName("없는 아티스트를 찾는 경우 예외처리")
-    @Test
-    void noMatchingArtist() {
-        assertThrows(NoMatchingResultException.class,
-                () -> scrappingService.getSongList(
-                        getBodyReadByTestResource(VALID_FILE_PATH),
-                        "나는없는아티스트일걸?",
-                        "다시 여기 바닷가"));
-    }
-
-    @DisplayName("없는 제목을 찾은 경우 예외처리")
-    @Test
-    void noMatchingTitle() {
-        assertThrows(NoMatchingResultException.class,
-                () -> scrappingService.getSongList(
-                        getBodyReadByTestResource(VALID_FILE_PATH),
-                        "싹쓰리",
-                        "나는없는제목일걸?"));
     }
 
     @DisplayName("현재 태그에서 최고 부모까지의 Hierarchy를 가져온다, 이 테스트는 서비스 메서드 작성을 위한 테스트이다.")
